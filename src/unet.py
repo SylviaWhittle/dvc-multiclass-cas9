@@ -21,6 +21,7 @@ from keras.layers import (
 )
 import tensorflow as tf
 
+
 def dice_loss(y_true, y_pred, smooth=1e-5):
     """DICE loss function.
 
@@ -44,9 +45,10 @@ def dice_loss(y_true, y_pred, smooth=1e-5):
 
     # Check the dimensions are expected: (batch_size, H, W, C)
     if len(y_true.shape) != 4 or len(y_pred.shape) != 4:
-        raise ValueError(f"Expected y_true and y_pred to have 4 dimensions,"
-                         f"got {len(y_true.shape)} and {len(y_pred.shape)}")
-    
+        raise ValueError(
+            f"Expected y_true and y_pred to have 4 dimensions," f"got {len(y_true.shape)} and {len(y_pred.shape)}"
+        )
+
     # Flatten spatial+channel dims from a tensor of shape (batch_size, H, W, C) to (batch_size, H*W*C).
     # This allows us to compute DICE per sample in the batch and then average over the batch.
     y_true_flat = tf.reshape(y_true, shape=[tf.shape(y_true)[0], -1])
@@ -85,8 +87,9 @@ def iou_loss(y_true, y_pred, smooth=1e-5):
 
     # Check the dimensions are expected: (batch_size, H, W, C)
     if len(y_true.shape) != 4 or len(y_pred.shape) != 4:
-        raise ValueError(f"Expected y_true and y_pred to have 4 dimensions,"
-                         f"got {len(y_true.shape)} and {len(y_pred.shape)}")
+        raise ValueError(
+            f"Expected y_true and y_pred to have 4 dimensions," f"got {len(y_true.shape)} and {len(y_pred.shape)}"
+        )
 
     # Flatten spatial+channel dims from a tensor of shape (batch_size, H, W, C) to (batch_size, H*W*C).
     # This allows us to compute IoU per sample in the batch and then average over the batch.
@@ -129,6 +132,7 @@ def bce_loss(y_true, y_pred, epsilon=1e-7):
     bce = -tf.reduce_mean(y_true * tf.math.log(y_pred) + (1 - y_true) * tf.math.log(1 - y_pred))
     return bce
 
+
 LOSS_REGISTRY = {
     "dice_loss": dice_loss,
     "iou_loss": iou_loss,
@@ -144,9 +148,10 @@ METRIC_REGISTRY = {
     "keras_iou": IoU(num_classes=2, target_class_ids=[0, 1]),
 }
 
+
 def get_loss_function(loss_function: str) -> str | Callable:
     """Get the loss function based on the provided string.
-    
+
     Parameters
     ----------
     loss_function : str
@@ -158,13 +163,15 @@ def get_loss_function(loss_function: str) -> str | Callable:
         The corresponding loss function.
     """
     if loss_function not in LOSS_REGISTRY:
-        raise ValueError(f"Loss function {loss_function} not recognized."
-                         f"Available options: {list(LOSS_REGISTRY.keys())}")
+        raise ValueError(
+            f"Loss function {loss_function} not recognized." f"Available options: {list(LOSS_REGISTRY.keys())}"
+        )
     return LOSS_REGISTRY[loss_function]
+
 
 def get_metric_functions(metrics: list[str] | None) -> list[Callable | str]:
     """Get the list of metric functions based on the provided list of strings.
-    
+
     Parameters
     ----------
     metrics : list[str] | None
@@ -180,15 +187,16 @@ def get_metric_functions(metrics: list[str] | None) -> list[Callable | str]:
     model_metrics = []
     for metric in metrics:
         if metric not in METRIC_REGISTRY:
-            raise ValueError(f"Metric {metric} not recognized."
-                             f"Available options: {list(METRIC_REGISTRY.keys())}")
+            raise ValueError(f"Metric {metric} not recognized." f"Available options: {list(METRIC_REGISTRY.keys())}")
         model_metrics.append(METRIC_REGISTRY[metric])
     return model_metrics
+
 
 def unet_model(
     image_height: int,
     image_width: int,
     image_channels: int,
+    output_channels: int,
     learning_rate: float,
     activation_function: str,
     loss_function: str | Callable,
@@ -204,13 +212,15 @@ def unet_model(
         Image width.
     image_channels : int
         Number of image channels.
+    output_channels : int
+        Number of output channels.
     learning_rate : float
         Learning rate for the Adam optimizer.
     activation_function : str
         Activation function to use in the model.
     loss_function : str
         Loss function to use in the model.
-    metrics : list[str] | None
+    metrics : list[str | Callable]
         List of metrics to use in the model.
 
     Returns
@@ -316,7 +326,8 @@ def unet_model(
     )(conv9)
 
     # Make predictions of classes based on the culminated data
-    outputs = Conv2D(1, kernel_size=(1, 1), activation="sigmoid")(conv9)
+    final_layer_activation = "sigmoid" if output_channels == 1 else "softmax"
+    outputs = Conv2D(output_channels, kernel_size=(1, 1), activation=final_layer_activation)(conv9)
 
     model = Model(inputs=[inputs], outputs=[outputs])
     print(type(model))
