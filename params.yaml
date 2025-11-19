@@ -1,0 +1,27 @@
+base:
+  random_seed: 0
+  model_image_size: 256
+  # Loss needs to be here since both train and evaluate need it
+  loss_function: "keras_dice" # Options: binary_crossentropy, iou_loss, dice_loss
+  metrics: ["keras_iou"] # Options: accuracy, iou_loss, dice_loss, keras_iou
+  norm_upper_bound: 7
+  norm_lower_bound: -1
+  filter_channels: ["original"] # Options: original, hessian, can be combined.
+  hessian_component: minima # Options: maxima, minima
+  hessian_sigma: 4
+data_split:
+  test_split: 0.2
+  data_dir: data/all_data/
+  train_data_dir: data/train/
+  test_data_dir: data/test/
+train:
+  train_data_dir: data/train/
+  model_save_dir: models/
+  batch_size: 5
+  epochs: 10
+  activation_function: relu
+  learning_rate: 0.0001
+  validation_split: 0.2
+evaluate:
+  model_path: models/unet_model.keras
+  test_data_dir: data/test/
