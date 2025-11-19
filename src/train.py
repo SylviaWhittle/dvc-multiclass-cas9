@@ -197,12 +197,12 @@ def train_model(
         logger.info("Training: Finished training.")
 
         logger.info(f"Training: Saving model to {model_save_dir}")
-        model.save(Path(model_save_dir) / "catsnet_model.keras")
+        model.save(Path(model_save_dir) / "unet_model.keras")
         live.log_artifact(
-            str(Path(model_save_dir) / "catsnet_model.keras"),
+            str(Path(model_save_dir) / "unet_model.keras"),
             type="model",
-            name="catsnet_model",
-            desc="Model trained to segment cats.",
+            name="unet_model",
+            desc="unet-type DL model.",
             labels=["cv", "segmentation"],
         )
         logger.info("Training: Finished.")

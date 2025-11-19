@@ -1,0 +1,52 @@
+stages:
+  data_split:
+    cmd: python src/data_split.py
+    deps:
+    - data/all_data
+    - src/data_split.py
+    params:
+    - base
+    - data_split
+    outs:
+    - data/test
+    - data/train
+  train:
+    cmd: python src/train.py
+    deps:
+    - data/train/
+    - src/train.py
+    - src/unet.py
+    - src/preprocess.py
+    - src/augmentation.py
+    params:
+    - base
+    - train
+    outs:
+    - models/unet_model.keras
+  evaluate:
+    cmd: python src/evaluate.py
+    deps:
+    - data/test/
+    - models/unet_model.keras
+    - src/evaluate.py
+    - src/unet.py
+    params:
+    - base
+    - evaluate
+    outs:
+    - results/evaluate/
+metrics:
+  - results/train/metrics.json
+  - results/evaluate/metrics.json
+plots:
+- results/train/plots/metrics:
+    x: step
+- results/evaluate/plots/images
+artifacts:
+  unet_model:
+    path: models/unet_model.keras
+    type: model
+    desc: a unet-type DL model.
+    labels:
+    - cv
+    - segmentation
