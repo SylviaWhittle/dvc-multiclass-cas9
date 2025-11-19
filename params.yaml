@@ -1,6 +1,9 @@
 base:
   random_seed: 0
   model_image_size: 256
+  # Number of segmentation classes. 1 for binary (using sigmoid loss) or 3 or more
+  # for multi-class (using softmax loss)
+  output_channels: 3
   # Loss needs to be here since both train and evaluate need it
   loss_function: "keras_dice" # Options: binary_crossentropy, iou_loss, dice_loss
   metrics: ["keras_iou"] # Options: accuracy, iou_loss, dice_loss, keras_iou

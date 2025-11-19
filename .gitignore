@@ -211,3 +211,4 @@ __marimo__/
 *.h5
 *.log
 *.csv
+*.keras

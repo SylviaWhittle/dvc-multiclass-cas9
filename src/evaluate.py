@@ -38,6 +38,7 @@ def evaluate(
     model: tf.keras.Model,
     data_dir: Path,
     model_image_size: Tuple[int, int],
+    output_channels: int,
     norm_upper_bound: float,
     norm_lower_bound: float,
     filter_channels: list[str],
@@ -89,6 +90,7 @@ def evaluate(
             mask = preprocess_mask(
                 mask=mask,
                 model_image_size=model_image_size,
+                channels=output_channels,
             )
 
             logger.info(f"Evaluate: Image shape after reshape: {image.shape} | Mask shape: {mask.shape}")
@@ -129,13 +131,17 @@ def evaluate(
             max_num_cols = 3
             num_output_channels = mask.shape[2]
             num_input_channels = image.shape[2]
-            # Total plots = number input channels + number of output channels + mask
-            total_plots = num_input_channels + num_output_channels + 1
+            # Total plots = number input channels + number output channels (for GT) + number output channels
+            # (predicted) *2 (for raw and thresholded)
+            total_plots = num_input_channels + num_output_channels + 2*num_output_channels
+            logger.info(f"Evaluate: Total plots to make: {total_plots}")
             num_rows = total_plots // max_num_cols + int(total_plots % max_num_cols > 0)
+            logger.info(f"Evaluate: Creating subplot with {num_rows} rows and {max_num_cols} columns.")
             fig, axes = plt.subplots(num_rows, min(total_plots, max_num_cols))
             plot_index = 0
             logger.info(
-                f"Evaluate: Plotting {num_input_channels} input channels and {num_output_channels} output channels."
+                f"Evaluate: Plotting {num_input_channels} input channels"
+                "and {num_output_channels} output channels."
             )
             # Plot input channels
             for i in range(num_input_channels):
@@ -194,6 +200,7 @@ if __name__ == "__main__":
         model=loaded_model,
         data_dir=data_path,
         model_image_size=(base_params["model_image_size"], base_params["model_image_size"]),
+        output_channels=base_params["output_channels"],
         norm_upper_bound=base_params["norm_upper_bound"],
         norm_lower_bound=base_params["norm_lower_bound"],
         filter_channels=base_params["filter_channels"],

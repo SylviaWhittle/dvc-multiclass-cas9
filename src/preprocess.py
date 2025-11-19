@@ -7,6 +7,7 @@ import numpy.typing as npt
 
 # pylint: disable=no-name-in-module
 from skimage.feature import hessian_matrix, hessian_matrix_eigvals
+from keras.utils import to_categorical
 
 
 def resize_image(
@@ -115,14 +116,27 @@ def preprocess_image(
 
     return image
 
-
 def preprocess_mask(
     mask: npt.NDArray[np.bool_],
     model_image_size: tuple[int, int],
+    channels: int,
 ) -> npt.NDArray[np.bool_]:
     """Preprocess a mask of dimensions (H, W) or (H, W, C)"""
-    # Check if has a channel dimension, add if not
+    # If doing binary segmentation, ensure the mask has a channel dimension
     if len(mask.shape) == 2:
+        # Add a channel dimension
         mask = np.expand_dims(mask, axis=-1)
+    
+    # If doing multi-class segmentation, convert to one-hot encoding
+    if channels > 1:
+        # If we have a single channel mask with integer labels, convert to one-hot
+        if mask.shape[2] == 1:
+            mask = to_categorical(mask[:, :, 0], num_classes=channels).astype(bool)
+        else:
+            # We already have multi-channel binary mask.
+            # Check that the number of channels matches
+            if mask.shape[2] != channels:
+                raise ValueError(f"Mask has {mask.shape[2]} channels, expected {channels} channels.")
+    
     mask = resize_mask(mask, model_image_size)
     return mask

@@ -1,0 +1,141 @@
+schema: '2.0'
+stages:
+  data_split:
+    cmd: python src/data_split.py
+    deps:
+    - path: data/all_data
+      hash: md5
+      md5: a508cf300fe07383de3d6286dfeacb9e.dir
+      size: 37116084
+      nfiles: 400
+    - path: src/data_split.py
+      hash: md5
+      md5: 6084f741ea42b8655dd9f16ecc3491a3
+      size: 3610
+    params:
+      params.yaml:
+        base:
+          random_seed: 0
+          model_image_size: 256
+          output_channels: 3
+          loss_function: keras_dice
+          metrics:
+          - keras_iou
+          norm_upper_bound: 7
+          norm_lower_bound: -1
+          filter_channels:
+          - original
+          hessian_component: minima
+          hessian_sigma: 4
+        data_split:
+          test_split: 0.2
+          data_dir: data/all_data/
+          train_data_dir: data/train/
+          test_data_dir: data/test/
+    outs:
+    - path: data/test
+      hash: md5
+      md5: 10469110fe1d46b13feac438b300d17e.dir
+      size: 7377726
+      nfiles: 80
+    - path: data/train
+      hash: md5
+      md5: 1944287ff92c08c343cb94c0928b6529.dir
+      size: 29738358
+      nfiles: 320
+  train:
+    cmd: python src/train.py
+    deps:
+    - path: data/train/
+      hash: md5
+      md5: 1944287ff92c08c343cb94c0928b6529.dir
+      size: 29738358
+      nfiles: 320
+    - path: src/augmentation.py
+      hash: md5
+      md5: 852c8ac90f90d6528f8388bf2063a92c
+      size: 3169
+    - path: src/preprocess.py
+      hash: md5
+      md5: 59e25e73e2f7dbe34b17faa4d466fbe9
+      size: 5078
+    - path: src/train.py
+      hash: md5
+      md5: baa317543a39ac36f50e4328d8687636
+      size: 9715
+    - path: src/unet.py
+      hash: md5
+      md5: 5510876a249bc30e3387b1af7127430b
+      size: 11630
+    params:
+      params.yaml:
+        base:
+          random_seed: 0
+          model_image_size: 256
+          output_channels: 3
+          loss_function: keras_dice
+          metrics:
+          - keras_iou
+          norm_upper_bound: 7
+          norm_lower_bound: -1
+          filter_channels:
+          - original
+          hessian_component: minima
+          hessian_sigma: 4
+        train:
+          train_data_dir: data/train/
+          model_save_dir: models/
+          batch_size: 5
+          epochs: 10
+          activation_function: relu
+          learning_rate: 0.0001
+          validation_split: 0.2
+    outs:
+    - path: models/unet_model.keras
+      hash: md5
+      md5: 1004f7165c20b539d1ad2521db2581be
+      size: 23461188
+  evaluate:
+    cmd: python src/evaluate.py
+    deps:
+    - path: data/test/
+      hash: md5
+      md5: 10469110fe1d46b13feac438b300d17e.dir
+      size: 7377726
+      nfiles: 80
+    - path: models/unet_model.keras
+      hash: md5
+      md5: 1004f7165c20b539d1ad2521db2581be
+      size: 23461188
+    - path: src/evaluate.py
+      hash: md5
+      md5: 3574d8681be031772e1c24828b8032df
+      size: 8292
+    - path: src/unet.py
+      hash: md5
+      md5: 5510876a249bc30e3387b1af7127430b
+      size: 11630
+    params:
+      params.yaml:
+        base:
+          random_seed: 0
+          model_image_size: 256
+          output_channels: 3
+          loss_function: keras_dice
+          metrics:
+          - keras_iou
+          norm_upper_bound: 7
+          norm_lower_bound: -1
+          filter_channels:
+          - original
+          hessian_component: minima
+          hessian_sigma: 4
+        evaluate:
+          model_path: models/unet_model.keras
+          test_data_dir: data/test/
+    outs:
+    - path: results/evaluate/
+      hash: md5
+      md5: a5a9877b1fc6356fe960c02b3e2f3b14.dir
+      size: 807609
+      nfiles: 21

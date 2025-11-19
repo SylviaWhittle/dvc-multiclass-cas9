@@ -22,6 +22,7 @@ yaml = YAML(typ="safe")
 def image_data_generator(
     data_dir: Path,
     image_indexes: npt.NDArray[np.int64],
+    output_channels: int,
     batch_size: int,
     model_image_size: tuple[int, int],
     norm_upper_bound: float,
@@ -61,6 +62,7 @@ def image_data_generator(
             ground_truth = preprocess_mask(
                 mask=ground_truth,
                 model_image_size=model_image_size,
+                channels=output_channels,
             )
 
             # Add the image and ground truth to the batch
@@ -87,6 +89,7 @@ def train_model(
     train_data_dir: Path,
     model_save_dir: Path,
     model_image_size: tuple[int, int],
+    output_channels: int,
     activation_function: str,
     learning_rate: float,
     batch_size: int,
@@ -109,6 +112,7 @@ def train_model(
     logger.info(f"|  Train data directory: {train_data_dir}")
     logger.info(f"|  Model save directory: {model_save_dir}")
     logger.info(f"|  Model image size: {model_image_size}")
+    logger.info(f"|  Output channels: {output_channels}")
     logger.info(f"|  Activation function: {activation_function}")
     logger.info(f"|  Learning rate: {learning_rate}")
     logger.info(f"|  Batch size: {batch_size}")
@@ -144,6 +148,7 @@ def train_model(
         data_dir=train_data_dir,
         image_indexes=train_indexes,
         batch_size=batch_size,
+        output_channels=output_channels,
         model_image_size=model_image_size,
         norm_upper_bound=norm_upper_bound,
         norm_lower_bound=norm_lower_bound,
@@ -156,6 +161,7 @@ def train_model(
         data_dir=train_data_dir,
         image_indexes=validation_indexes,
         batch_size=batch_size,
+        output_channels=output_channels,
         model_image_size=model_image_size,
         norm_upper_bound=norm_upper_bound,
         norm_lower_bound=norm_lower_bound,
@@ -170,6 +176,7 @@ def train_model(
         image_height=model_image_size[0],
         image_width=model_image_size[1],
         image_channels=len(filter_channels),
+        output_channels=output_channels,
         learning_rate=learning_rate,
         activation_function=activation_function,
         loss_function=get_loss_function(loss_function),
@@ -243,6 +250,7 @@ if __name__ == "__main__":
         train_data_dir=train_data_path,
         model_save_dir=model_save_path,
         model_image_size=(base_params["model_image_size"], base_params["model_image_size"]),
+        output_channels=base_params["output_channels"],
         activation_function=train_params["activation_function"],
         learning_rate=train_params["learning_rate"],
         batch_size=train_params["batch_size"],

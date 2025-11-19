@@ -36,8 +36,8 @@ stages:
     outs:
     - results/evaluate/
 metrics:
-  - results/train/metrics.json
-  - results/evaluate/metrics.json
+- results/train/metrics.json
+- results/evaluate/metrics.json
 plots:
 - results/train/plots/metrics:
     x: step
@@ -46,7 +46,7 @@ artifacts:
   unet_model:
     path: models/unet_model.keras
     type: model
-    desc: a unet-type DL model.
+    desc: unet-type DL model.
     labels:
     - cv
     - segmentation
