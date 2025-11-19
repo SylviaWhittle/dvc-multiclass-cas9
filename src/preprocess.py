@@ -4,8 +4,10 @@ from PIL import Image
 from loguru import logger
 import numpy as np
 import numpy.typing as npt
+
 # pylint: disable=no-name-in-module
 from skimage.feature import hessian_matrix, hessian_matrix_eigvals
+
 
 def resize_image(
     image: npt.NDArray[np.float64],
@@ -16,6 +18,7 @@ def resize_image(
     pil_image = pil_image.resize(size, resample=Image.NEAREST)
     return np.array(pil_image)
 
+
 def resize_single_channel_mask(
     mask: npt.NDArray[np.bool_],
     size: tuple[int, int],
@@ -24,6 +27,7 @@ def resize_single_channel_mask(
     pil_mask = Image.fromarray(mask)
     pil_mask = pil_mask.resize(size, resample=Image.NEAREST)
     return np.array(pil_mask).astype(bool)
+
 
 def resize_mask(
     mask: npt.NDArray[np.bool_],
@@ -44,10 +48,9 @@ def resize_mask(
     resized_mask = np.stack(mask_channels, axis=-1)
     return resized_mask.astype(bool)
 
+
 def normalise_image(
-    image: npt.NDArray[np.float64],
-    norm_upper_bound: float,
-    norm_lower_bound: float
+    image: npt.NDArray[np.float64], norm_upper_bound: float, norm_lower_bound: float
 ) -> npt.NDArray[np.float64]:
     """Normalise the image to the range [0, 1] based on the provided bounds."""
     # Normalise the image
@@ -56,10 +59,9 @@ def normalise_image(
     image = image / (norm_upper_bound - norm_lower_bound)
     return image
 
+
 def apply_hessian_filter(
-    image: npt.NDArray[np.float64],
-    hessian_component: str,
-    sigma: int = 1
+    image: npt.NDArray[np.float64], hessian_component: str, sigma: int = 1
 ) -> npt.NDArray[np.float64]:
     """Apply a Hessian filter to the image"""
     hessian_matrix_image = hessian_matrix(image, sigma=sigma, order="rc", use_gaussian_derivatives=False)
@@ -81,6 +83,7 @@ def apply_hessian_filter(
     hessian_image = np.clip(hessian_image, vmin, vmax)
     hessian_image = (hessian_image - vmin) / (vmax - vmin)
     return hessian_image
+
 
 def preprocess_image(
     image: npt.NDArray[np.float64],
@@ -111,6 +114,7 @@ def preprocess_image(
     image = np.stack(image_channels, axis=-1)
 
     return image
+
 
 def preprocess_mask(
     mask: npt.NDArray[np.bool_],
