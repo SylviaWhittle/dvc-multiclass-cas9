@@ -4,6 +4,8 @@
 
 from typing import Callable
 
+from loguru import logger
+
 from keras.optimizers import Adam
 from keras.models import Model
 from keras.losses import Dice
@@ -20,6 +22,45 @@ from keras.layers import (
     Lambda,
 )
 import tensorflow as tf
+
+def multiclass_dice_loss_optionally_ignore_background(y_true, y_pred, ignore_background: bool, smooth: float = 1e-5) -> tf.Tensor:
+    """Multiclass DICE loss function for masks of shape (batch, H, W, C) where C > 2."""
+    y_true = tf.cast(y_true, tf.float32)
+    y_pred = tf.cast(y_pred, tf.float32)
+
+    # Check that is one-hot encoded
+    # Ensure dimensions expected
+    if len(y_true.shape) != 4 or len(y_pred.shape) != 4:
+        raise ValueError(
+            f"Expected y_true and y_pred to have 4 dimensions (batch, H, W, C)," f"got {len(y_true.shape)} and {len(y_pred.shape)}"
+        )
+    if y_true.shape[-1] < 2:
+        raise ValueError("y_true must be one-hot encoded with at least 2 channels for multiclass DICE loss.")
+    
+    # Compute per-class dice
+    axes = [1, 2] # spatial dimensions excluding batch and channel
+    # compute intersection per class by multiplying each pixel of y_true and y_pred and summing over spatial dimensions
+    # this calculates the number of pixels correctly predicted for each class
+    intersection = tf.reduce_sum(y_true * y_pred, axis=axes)
+    sum_true = tf.reduce_sum(y_true, axis=axes)
+    sum_pred = tf.reduce_sum(y_pred, axis=axes)
+
+    dice_per_class = (2.0 * intersection + smooth) / (sum_true + sum_pred + smooth) # shape (batch, channel)
+    assert len(dice_per_class.shape) == 2, f"Expected dice_per_class to have 2 dimensions (B, C), got {len(dice_per_class.shape)}"
+    dice_per_class = tf.reduce_mean(dice_per_class, axis=0) # average over batch, shape (channel)
+
+    if ignore_background:
+        dice_per_class = dice_per_class[1:] # ignore background class (assumed to be channel 0)
+    dice_loss = 1.0 - tf.reduce_mean(dice_per_class) # average over classes
+    return dice_loss
+
+def multiclass_dice_loss_ignore_background(y_true, y_pred, smooth: float = 1e-5) -> tf.Tensor:
+    """Multiclass DICE loss ignoring background class."""
+    return multiclass_dice_loss_optionally_ignore_background(y_true, y_pred, ignore_background=True, smooth=smooth)
+
+def multiclass_dice_loss_include_background(y_true, y_pred, smooth: float = 1e-5) -> tf.Tensor:
+    """Multiclass DICE loss including background class."""
+    return multiclass_dice_loss_optionally_ignore_background(y_true, y_pred, ignore_background=False, smooth=smooth)
 
 
 def dice_loss(y_true, y_pred, smooth=1e-5):
@@ -138,6 +179,8 @@ LOSS_REGISTRY = {
     "iou_loss": iou_loss,
     "binary_crossentropy": "binary_crossentropy",
     "keras_dice": Dice(),
+    "multiclass_dice_ignore_background": multiclass_dice_loss_ignore_background,
+    "multiclass_dice_include_background": multiclass_dice_loss_include_background,
 }
 METRIC_REGISTRY = {
     "dice_loss": dice_loss,
@@ -327,6 +370,8 @@ def unet_model(
 
     # Make predictions of classes based on the culminated data
     final_layer_activation = "sigmoid" if output_channels == 1 else "softmax"
+    logger.info(f"Final layer activation function set to {final_layer_activation} since there"
+                f"are {output_channels} output channels.")
     outputs = Conv2D(output_channels, kernel_size=(1, 1), activation=final_layer_activation)(conv9)
 
     model = Model(inputs=[inputs], outputs=[outputs])
