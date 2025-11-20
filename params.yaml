@@ -6,8 +6,8 @@ base:
   output_channels: 3
   # Loss needs to be here since both train and evaluate need it
   # Options: binary_crossentropy, iou_loss, dice_loss, keras_dice, multiclass_dice_ignore_background,
-  #multiclass_dice_include_background
-  loss_function: "multiclass_dice_ignore_background"
+  #multiclass_dice_include_background, categorical_crossentropy
+  loss_function: "categorical_crossentropy"
   metrics: ["keras_iou"] # Options: accuracy, iou_loss, dice_loss, keras_iou
   norm_upper_bound: 7
   norm_lower_bound: -1
@@ -25,7 +25,7 @@ train:
   batch_size: 5
   epochs: 10
   activation_function: relu
-  learning_rate: 0.0001
+  learning_rate: 0.001
   validation_split: 0.2
 evaluate:
   model_path: models/unet_model.keras

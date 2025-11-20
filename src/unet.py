@@ -187,6 +187,7 @@ LOSS_REGISTRY = {
     "keras_dice": Dice(),
     "multiclass_dice_ignore_background": multiclass_dice_loss_ignore_background,
     "multiclass_dice_include_background": multiclass_dice_loss_include_background,
+    "categorical_crossentropy": "categorical_crossentropy",
 }
 METRIC_REGISTRY = {
     "dice_loss": dice_loss,
@@ -381,7 +382,6 @@ def unet_model(
     outputs = Conv2D(output_channels, kernel_size=(1, 1), activation=final_layer_activation)(conv9)
 
     model = Model(inputs=[inputs], outputs=[outputs])
-    print(type(model))
     # custom learning rate
     optimizer = Adam(learning_rate)
 

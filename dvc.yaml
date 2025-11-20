@@ -41,6 +41,7 @@ metrics:
 plots:
 - results/train/plots/metrics:
     x: step
+- results/train/plots/images
 - results/evaluate/plots/images
 artifacts:
   unet_model:

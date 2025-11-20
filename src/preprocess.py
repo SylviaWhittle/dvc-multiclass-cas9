@@ -119,24 +119,26 @@ def preprocess_image(
 def preprocess_mask(
     mask: npt.NDArray[np.bool_],
     model_image_size: tuple[int, int],
-    channels: int,
+    output_channels: int,
 ) -> npt.NDArray[np.bool_]:
     """Preprocess a mask of dimensions (H, W) or (H, W, C)"""
-    # If doing binary segmentation, ensure the mask has a channel dimension
-    if len(mask.shape) == 2:
-        # Add a channel dimension
-        mask = np.expand_dims(mask, axis=-1)
-    
+
     # If doing multi-class segmentation, convert to one-hot encoding
-    if channels > 1:
-        # If we have a single channel mask with integer labels, convert to one-hot
-        if mask.shape[2] == 1:
-            mask = to_categorical(mask[:, :, 0], num_classes=channels).astype(bool)
-        else:
-            # We already have multi-channel binary mask.
-            # Check that the number of channels matches
-            if mask.shape[2] != channels:
-                raise ValueError(f"Mask has {mask.shape[2]} channels, expected {channels} channels.")
+    if output_channels > 1:
+        # If mask is a single channel, convert to categorical
+        if len(mask.shape) == 2:
+            mask = to_categorical(mask, num_classes=output_channels)
+        elif mask.shape[2] != output_channels:
+            raise ValueError(f"Mask has {mask.shape[2]} channels, expected {output_channels} channels.")
+    else:
+        # Single channel output, ensure mask is binary and add the channel dimension if missing
+        if len(mask.shape) == 2:
+            mask = np.expand_dims(mask, axis=-1)
+        elif mask.shape[2] != 1:
+            raise ValueError(f"Mask has {mask.shape[2]} channels, expected 1 channel.")
+        if np.max(mask) > 1 or np.min(mask) < 0:
+            raise ValueError(f"For single channel output, mask values must be binary (0 or 1)."
+                             f"Got min {np.min(mask)} and max {np.max(mask)}.")
     
     mask = resize_mask(mask, model_image_size)
-    return mask
+    return mask.astype(bool)
