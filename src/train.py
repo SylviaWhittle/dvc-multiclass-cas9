@@ -16,6 +16,7 @@ from ruamel.yaml import YAML
 from augmentation import flip_and_rotate, zoom_and_shift
 from unet import unet_model, get_loss_function, get_metric_functions
 from preprocess import preprocess_image, preprocess_mask
+from plotting import plot_image_mask_prediction
 
 yaml = YAML(typ="safe")
 
@@ -43,7 +44,7 @@ def image_data_generator(
         for index in batch_indexes:
             # Load the image and ground truth
             image = np.load(data_dir / f"image_{index}.npy")
-            ground_truth = np.load(data_dir / f"mask_{index}.npy").astype(bool)
+            ground_truth = np.load(data_dir / f"mask_{index}.npy")
 
             # Augment images and masks
             image, ground_truth = zoom_and_shift(image, ground_truth)
@@ -62,7 +63,7 @@ def image_data_generator(
             ground_truth = preprocess_mask(
                 mask=ground_truth,
                 model_image_size=model_image_size,
-                channels=output_channels,
+                output_channels=output_channels,
             )
 
             # Add the image and ground truth to the batch
@@ -214,21 +215,30 @@ def train_model(
         )
         logger.info("Training: Finished.")
 
-        # loss = history.history["loss"]
-        # val_loss = history.history["val_loss"]
-        # epoch_indexes = range(1, len(loss) + 1)
-        # plt.plot(epoch_indexes, loss, "bo", label="Training loss")
-        # plt.plot(epoch_indexes, val_loss, "b", label="Validation loss")
-        # plt.title("Training and validation loss")
-        # plt.xlabel("Epochs")
-        # plt.ylabel("Loss")
-        # plt.legend()
-        # plt.show()
+        # Show result on a few training images from the train generator
+        logger.info("Training: Evaluating a few training images.")
+        for batch_x, batch_y in train_generator:
+            # Iterate over a batch of images
+            for i in range(min(3, batch_size)):
+                image = batch_x[i]
+                mask = batch_y[i]
 
-        # date = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+                # Add the batch dimension
+                input_image = np.expand_dims(image, axis=0)
 
-        # Save the model
-        # model.save(model_save_dir / f"model_{date}.h5")
+                # Predict the mask
+                predicted_mask = model.predict(input_image)[0]
+                predicted_mask_binary = (predicted_mask >= 0.5).astype(np.float32)
+
+                fig = plot_image_mask_prediction(
+                    image=image,
+                    mask=mask,
+                    mask_predicted=predicted_mask,
+                    mask_predicted_binary=predicted_mask_binary,
+                )
+                live.log_image(f"train_image_plot_{i}.png", fig)
+
+            break # stop after one batch
 
 
 if __name__ == "__main__":

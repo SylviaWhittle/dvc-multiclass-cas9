@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 
 from unet import LOSS_REGISTRY, METRIC_REGISTRY
 from preprocess import preprocess_image, preprocess_mask
+from plotting import plot_image_mask_prediction
 
 yaml = YAML(typ="safe")
 
@@ -90,7 +91,7 @@ def evaluate(
             mask = preprocess_mask(
                 mask=mask,
                 model_image_size=model_image_size,
-                channels=output_channels,
+                output_channels=output_channels,
             )
 
             logger.info(f"Evaluate: Image shape after reshape: {image.shape} | Mask shape: {mask.shape}")
@@ -125,47 +126,12 @@ def evaluate(
             dice_score = dice(mask_predicted, mask)
             dice_multi += dice_score / len(image_indexes)
 
-            # Plot the image, mask and predicted mask and log it
-            # Plot the image, mask and predicted mask and log it
-            # Plot sequentially with wrapping
-            max_num_cols = 3
-            num_output_channels = mask.shape[2]
-            num_input_channels = image.shape[2]
-            # Total plots = number input channels + number output channels (for GT) + number output channels
-            # (predicted) *2 (for raw and thresholded)
-            total_plots = num_input_channels + num_output_channels + 2*num_output_channels
-            logger.info(f"Evaluate: Total plots to make: {total_plots}")
-            num_rows = total_plots // max_num_cols + int(total_plots % max_num_cols > 0)
-            logger.info(f"Evaluate: Creating subplot with {num_rows} rows and {max_num_cols} columns.")
-            fig, axes = plt.subplots(num_rows, min(total_plots, max_num_cols))
-            plot_index = 0
-            logger.info(
-                f"Evaluate: Plotting {num_input_channels} input channels"
-                "and {num_output_channels} output channels."
+            fig= plot_image_mask_prediction(
+                image=image,
+                mask=mask,
+                mask_predicted=mask_predicted,
+                mask_predicted_binary=mask_predicted_binary,
             )
-            # Plot input channels
-            for i in range(num_input_channels):
-                ax = axes.flatten()[plot_index]
-                ax.imshow(image[:, :, i], cmap="viridis")
-                ax.set_title(f"Input C{i}")
-                plot_index += 1
-            # Plot ground truth mask channels
-            for i in range(mask.shape[2]):
-                ax = axes.flatten()[plot_index]
-                ax.imshow(mask[:, :, i], cmap="binary")
-                ax.set_title(f"GT Mask C{i}")
-                plot_index += 1
-            # Plot output channels both nonbinary and binary
-            for i in range(num_output_channels):
-                ax = axes.flatten()[plot_index]
-                ax.imshow(mask_predicted[:, :, i], cmap="gray_r")
-                ax.set_title(f"Pred Mask C{i}")
-                plot_index += 1
-                ax = axes.flatten()[plot_index]
-                ax.imshow(mask_predicted_binary[:, :, i], cmap="binary")
-                ax.set_title(f"Pred bin Mask C{i}")
-                plot_index += 1
-            plt.tight_layout()
             # plt.savefig(f"{plot_save_dir}/test_image_{index}.png")
             live.log_image(f"test_image_plot_{index}.png", fig)
 
