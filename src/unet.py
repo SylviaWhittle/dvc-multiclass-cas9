@@ -21,8 +21,10 @@ from keras.layers import (
     Dropout,
     Lambda,
 )
+from keras.utils import register_keras_serializable
 import tensorflow as tf
 
+@register_keras_serializable(package="custom_losses")
 def multiclass_dice_loss_optionally_ignore_background(y_true, y_pred, ignore_background: bool, smooth: float = 1e-5) -> tf.Tensor:
     """Multiclass DICE loss function for masks of shape (batch, H, W, C) where C > 2."""
     y_true = tf.cast(y_true, tf.float32)
@@ -54,15 +56,17 @@ def multiclass_dice_loss_optionally_ignore_background(y_true, y_pred, ignore_bac
     dice_loss = 1.0 - tf.reduce_mean(dice_per_class) # average over classes
     return dice_loss
 
+@register_keras_serializable(package="custom_losses")
 def multiclass_dice_loss_ignore_background(y_true, y_pred, smooth: float = 1e-5) -> tf.Tensor:
     """Multiclass DICE loss ignoring background class."""
     return multiclass_dice_loss_optionally_ignore_background(y_true, y_pred, ignore_background=True, smooth=smooth)
 
+@register_keras_serializable(package="custom_losses")
 def multiclass_dice_loss_include_background(y_true, y_pred, smooth: float = 1e-5) -> tf.Tensor:
     """Multiclass DICE loss including background class."""
     return multiclass_dice_loss_optionally_ignore_background(y_true, y_pred, ignore_background=False, smooth=smooth)
 
-
+@register_keras_serializable(package="custom_losses")
 def dice_loss(y_true, y_pred, smooth=1e-5):
     """DICE loss function.
 
@@ -106,6 +110,7 @@ def dice_loss(y_true, y_pred, smooth=1e-5):
 
 
 # IoU Loss
+@register_keras_serializable(package="custom_losses")
 def iou_loss(y_true, y_pred, smooth=1e-5):
     """Intersection over Union loss function.
 
@@ -146,6 +151,7 @@ def iou_loss(y_true, y_pred, smooth=1e-5):
 
 
 # BCE loss
+@register_keras_serializable(package="custom_losses")
 def bce_loss(y_true, y_pred, epsilon=1e-7):
     """Manual binary crossentropy loss function.
 

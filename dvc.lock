@@ -18,7 +18,7 @@ stages:
           random_seed: 0
           model_image_size: 256
           output_channels: 3
-          loss_function: keras_dice
+          loss_function: multiclass_dice_ignore_background
           metrics:
           - keras_iou
           norm_upper_bound: 7
@@ -65,15 +65,15 @@ stages:
       size: 9715
     - path: src/unet.py
       hash: md5
-      md5: 5510876a249bc30e3387b1af7127430b
-      size: 11630
+      md5: f0acfa71c1df7bf26c54fe3a58cfd728
+      size: 14645
     params:
       params.yaml:
         base:
           random_seed: 0
           model_image_size: 256
           output_channels: 3
-          loss_function: keras_dice
+          loss_function: multiclass_dice_ignore_background
           metrics:
           - keras_iou
           norm_upper_bound: 7
@@ -93,8 +93,8 @@ stages:
     outs:
     - path: models/unet_model.keras
       hash: md5
-      md5: 1004f7165c20b539d1ad2521db2581be
-      size: 23461188
+      md5: 485d9d96e46acc22172e1f0722dfc3ce
+      size: 23461168
   evaluate:
     cmd: python src/evaluate.py
     deps:
@@ -105,23 +105,23 @@ stages:
       nfiles: 80
     - path: models/unet_model.keras
       hash: md5
-      md5: 1004f7165c20b539d1ad2521db2581be
-      size: 23461188
+      md5: 485d9d96e46acc22172e1f0722dfc3ce
+      size: 23461168
     - path: src/evaluate.py
       hash: md5
       md5: 3574d8681be031772e1c24828b8032df
       size: 8292
     - path: src/unet.py
       hash: md5
-      md5: 5510876a249bc30e3387b1af7127430b
-      size: 11630
+      md5: f0acfa71c1df7bf26c54fe3a58cfd728
+      size: 14645
     params:
       params.yaml:
         base:
           random_seed: 0
           model_image_size: 256
           output_channels: 3
-          loss_function: keras_dice
+          loss_function: multiclass_dice_ignore_background
           metrics:
           - keras_iou
           norm_upper_bound: 7
@@ -136,6 +136,6 @@ stages:
     outs:
     - path: results/evaluate/
       hash: md5
-      md5: a5a9877b1fc6356fe960c02b3e2f3b14.dir
-      size: 807609
+      md5: b07fe04a3d32c30baa3269b5832578fd.dir
+      size: 923651
       nfiles: 21
