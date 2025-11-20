@@ -22,8 +22,8 @@ data_split:
 train:
   train_data_dir: data/train/
   model_save_dir: models/
-  batch_size: 5
-  epochs: 10
+  batch_size: 8
+  epochs: 40
   activation_function: relu
   learning_rate: 0.001
   validation_split: 0.2

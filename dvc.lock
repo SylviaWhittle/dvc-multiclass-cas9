@@ -55,18 +55,22 @@ stages:
       hash: md5
       md5: 852c8ac90f90d6528f8388bf2063a92c
       size: 3169
+    - path: src/plotting.py
+      hash: md5
+      md5: 4800919e5aa49b4c4c404e4f42651bb4
+      size: 2988
     - path: src/preprocess.py
       hash: md5
-      md5: 59e25e73e2f7dbe34b17faa4d466fbe9
-      size: 5078
+      md5: fd4392c44861406d1e64db6f41f8f2b5
+      size: 5298
     - path: src/train.py
       hash: md5
-      md5: 7d34c5f7f05c2ceb70328cedb0dbbbab
-      size: 10168
+      md5: 4c928e09770a36c44130d2399a55d08f
+      size: 10162
     - path: src/unet.py
       hash: md5
-      md5: 8567f3b1d723e38933829a896d9a8116
-      size: 14705
+      md5: b11a41415fcb692e1c4e0126f592b744
+      size: 14682
     params:
       params.yaml:
         base:
@@ -85,15 +89,15 @@ stages:
         train:
           train_data_dir: data/train/
           model_save_dir: models/
-          batch_size: 5
-          epochs: 20
+          batch_size: 8
+          epochs: 40
           activation_function: relu
           learning_rate: 0.001
           validation_split: 0.2
     outs:
     - path: models/unet_model.keras
       hash: md5
-      md5: b1b2f80c819c6656c8d07c784e795cb2
+      md5: be891a208d3f4b5219dfb6736e040677
       size: 23461063
   evaluate:
     cmd: python src/evaluate.py
@@ -105,16 +109,20 @@ stages:
       nfiles: 80
     - path: models/unet_model.keras
       hash: md5
-      md5: b1b2f80c819c6656c8d07c784e795cb2
+      md5: be891a208d3f4b5219dfb6736e040677
       size: 23461063
     - path: src/evaluate.py
       hash: md5
-      md5: 53c8c78c28d01da674cca420b33cbcfc
-      size: 6386
+      md5: 20d654a8be7e33af00eff1ff3c835594
+      size: 6393
+    - path: src/plotting.py
+      hash: md5
+      md5: 4800919e5aa49b4c4c404e4f42651bb4
+      size: 2988
     - path: src/unet.py
       hash: md5
-      md5: 8567f3b1d723e38933829a896d9a8116
-      size: 14705
+      md5: b11a41415fcb692e1c4e0126f592b744
+      size: 14682
     params:
       params.yaml:
         base:
@@ -136,6 +144,6 @@ stages:
     outs:
     - path: results/evaluate/
       hash: md5
-      md5: 1a05bb334d8ed8bc31df33284eaf90aa.dir
-      size: 1014806
+      md5: 7d2026fa1b9557df5db7b0bc1b9e739e.dir
+      size: 1154517
       nfiles: 21
