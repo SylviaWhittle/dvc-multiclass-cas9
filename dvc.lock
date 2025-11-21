@@ -57,20 +57,20 @@ stages:
       size: 3169
     - path: src/plotting.py
       hash: md5
-      md5: 4800919e5aa49b4c4c404e4f42651bb4
-      size: 2988
+      md5: c7003cbd72514a5b1941c768980e0a85
+      size: 3470
     - path: src/preprocess.py
       hash: md5
       md5: fd4392c44861406d1e64db6f41f8f2b5
       size: 5298
     - path: src/train.py
       hash: md5
-      md5: 4c928e09770a36c44130d2399a55d08f
-      size: 10162
+      md5: 7b95f2e5086c7070afbb54021a13727b
+      size: 10776
     - path: src/unet.py
       hash: md5
-      md5: b11a41415fcb692e1c4e0126f592b744
-      size: 14682
+      md5: 9c834505d48e9005ef72837f496702aa
+      size: 14683
     params:
       params.yaml:
         base:
@@ -90,14 +90,14 @@ stages:
           train_data_dir: data/train/
           model_save_dir: models/
           batch_size: 8
-          epochs: 40
+          epochs: 5
           activation_function: relu
           learning_rate: 0.001
           validation_split: 0.2
     outs:
     - path: models/unet_model.keras
       hash: md5
-      md5: be891a208d3f4b5219dfb6736e040677
+      md5: 549879f860012c54ee888b00d38c1d40
       size: 23461063
   evaluate:
     cmd: python src/evaluate.py
@@ -109,20 +109,20 @@ stages:
       nfiles: 80
     - path: models/unet_model.keras
       hash: md5
-      md5: be891a208d3f4b5219dfb6736e040677
+      md5: 549879f860012c54ee888b00d38c1d40
       size: 23461063
     - path: src/evaluate.py
       hash: md5
-      md5: 20d654a8be7e33af00eff1ff3c835594
-      size: 6393
+      md5: a91eec02d8af844b66594bc99145445f
+      size: 6230
     - path: src/plotting.py
       hash: md5
-      md5: 4800919e5aa49b4c4c404e4f42651bb4
-      size: 2988
+      md5: c7003cbd72514a5b1941c768980e0a85
+      size: 3470
     - path: src/unet.py
       hash: md5
-      md5: b11a41415fcb692e1c4e0126f592b744
-      size: 14682
+      md5: 9c834505d48e9005ef72837f496702aa
+      size: 14683
     params:
       params.yaml:
         base:
@@ -144,6 +144,6 @@ stages:
     outs:
     - path: results/evaluate/
       hash: md5
-      md5: 7d2026fa1b9557df5db7b0bc1b9e739e.dir
-      size: 1154517
+      md5: d36813f68f6ff981e4bedb03b90650ee.dir
+      size: 976077
       nfiles: 21

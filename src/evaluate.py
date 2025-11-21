@@ -90,6 +90,16 @@ def evaluate(
                 hessian_sigma=hessian_sigma,
             )
 
+            # Preprocess the image so it can be plotted properly
+            image = preprocess_image(
+                image=image,
+                model_image_size=model_image_size,
+                norm_upper_bound=norm_upper_bound,
+                norm_lower_bound=norm_lower_bound,
+                filter_channels=filter_channels,
+                hessian_component=hessian_component,
+                hessian_sigma=hessian_sigma,
+            )
             # Preprocess the ground truth mask so we can compare it to the predicted mask
             mask = preprocess_mask(
                 mask=mask,
@@ -98,13 +108,6 @@ def evaluate(
             )
 
             logger.info(f"Evaluate: Predicted mask shape: {mask_predicted.shape}")
-
-            # Remove the batch dimension but keep the channel dimension as dice iterates over channels in case
-            # of multi-class segmentation
-            image = np.squeeze(image, axis=0)
-            mask = np.squeeze(mask, axis=0)
-            mask_predicted = np.squeeze(mask_predicted, axis=0)
-
             logger.info(
                 f"Evaluate: Post-squeeze image shapes: Image: {image.shape} | Mask: {mask.shape} |"
                 f"Predicted Mask: {mask_predicted.shape} Binary predicted mask:"
