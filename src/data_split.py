@@ -8,6 +8,8 @@ from sklearn.model_selection import train_test_split
 from loguru import logger
 from ruamel.yaml import YAML
 
+from file_handling import get_image_and_mask_indexes
+
 yaml = YAML(typ="safe")
 
 
@@ -32,15 +34,15 @@ def data_split(
         raise ValueError("Different number of images and masks.")
 
     # Train test split
-    image_indexes = [int(re.search(r"\d+", file.name).group()) for file in data_dir.glob("image_*.npy")]
-    mask_indexes = [int(re.search(r"\d+", file.name).group()) for file in data_dir.glob("mask_*.npy")]
+    image_indexes, mask_indexes = get_image_and_mask_indexes(data_dir=data_dir)
 
     if set(image_indexes) != set(mask_indexes):
         raise ValueError(f"Different image and mask indexes : {image_indexes} and {mask_indexes}")
 
     logger.info(f"Data split: Found {len(image_indexes)} images and masks in {data_dir}.")
     train_indexes, test_indexes = train_test_split(image_indexes, test_size=test_split, random_state=random_seed)
-    logger.info(f"Data split: Split into {len(train_indexes)} training images and {len(test_indexes)} test images.")
+    logger.info(f"Data split: Split into {len(train_indexes)} training images"
+                f"and {len(test_indexes)} test images.")
 
     # Copy the images and masks to the train and test directories
     logger.info("Data split: Copying images and masks to train and test directories.")

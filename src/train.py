@@ -141,7 +141,8 @@ def train_model(
     train_indexes, validation_indexes = train_test_split(
         image_indexes, test_size=validation_split, random_state=random_seed
     )
-    logger.info(f"Training on {len(train_indexes)} images | validating on {len(validation_indexes)} images.")
+    logger.info(f"Training on {len(train_indexes)} images |"
+                f"validating on {len(validation_indexes)} images.")
 
     # Create an image data generator
     logger.info("Training: Creating data generators")

@@ -16,6 +16,7 @@ from unet import LOSS_REGISTRY, METRIC_REGISTRY
 from preprocess import preprocess_image, preprocess_mask
 from plotting import plot_image_mask_prediction
 from predict import predict_mask
+from file_handling import get_image_and_mask_indexes
 
 yaml = YAML(typ="safe")
 
@@ -61,8 +62,7 @@ def evaluate(
     logger.info("Evaluate: Loading the test images and masks.")
 
     # Find the indexes of all the image files in the format of image_<index>.npy
-    image_indexes = [int(re.search(r"\d+", file.name).group()) for file in data_dir.glob("image_*.npy")]
-    mask_indexes = [int(re.search(r"\d+", file.name).group()) for file in data_dir.glob("mask_*.npy")]
+    image_indexes, mask_indexes = get_image_and_mask_indexes(data_dir=data_dir)
 
     # Check that the image and mask indexes are the same
     if set(image_indexes) != set(mask_indexes):
