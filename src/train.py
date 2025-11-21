@@ -17,6 +17,7 @@ from augmentation import flip_and_rotate, zoom_and_shift
 from unet import unet_model, get_loss_function, get_metric_functions
 from preprocess import preprocess_image, preprocess_mask
 from plotting import plot_image_mask_prediction
+from predict import predict_mask
 
 yaml = YAML(typ="safe")
 
@@ -226,15 +227,24 @@ def train_model(
                 # Add the batch dimension
                 input_image = np.expand_dims(image, axis=0)
 
-                # Predict the mask
-                predicted_mask = model.predict(input_image)[0]
-                predicted_mask_binary = (predicted_mask >= 0.5).astype(np.float32)
-
+                # Predict the mask (without preprocessing as the generator already did that)
+                predicted_mask, predicted_mask_binary, mask_predicted_flat_discrete, mask_predicted_flat = predict_mask(
+                    model=model,
+                    image=input_image,
+                    norm_lower_bound=norm_lower_bound,
+                    norm_upper_bound=norm_upper_bound,
+                    filter_channels=filter_channels,
+                    hessian_component=hessian_component,
+                    hessian_sigma=hessian_sigma,
+                    do_image_preprocessing=False,
+                )
                 fig = plot_image_mask_prediction(
                     image=image,
                     mask=mask,
                     mask_predicted=predicted_mask,
                     mask_predicted_binary=predicted_mask_binary,
+                    mask_predicted_flat_discrete=mask_predicted_flat_discrete,
+                    mask_predicted_flat=mask_predicted_flat,
                 )
                 live.log_image(f"train_image_plot_{i}.png", fig)
 
