@@ -4,10 +4,11 @@ base:
   # Number of segmentation classes. 1 for binary (using sigmoid loss) or 3 or more
   # for multi-class (using softmax loss)
   output_channels: 3
-  # Loss needs to be here since both train and evaluate need it
-  # Options: binary_crossentropy, iou_loss, dice_loss, keras_dice, multiclass_dice_ignore_background,
-  #multiclass_dice_include_background, categorical_crossentropy
-  loss_function: "categorical_crossentropy"
+  # class weights - EXPERIMENTAL! Must sum to 1.0 and be as long as output_channels, or can be None. Eg: [0.2, 0.5, 0.3]
+  class_weights: null
+  # loss_function - Options: binary_crossentropy, iou_loss, dice_loss, keras_dice, multiclass_dice_ignore_background,
+  # multiclass_dice_include_background, categorical_crossentropy
+  loss_function: "multiclass_dice_include_background"
   metrics: ["keras_iou"] # Options: accuracy, iou_loss, dice_loss, keras_iou
   norm_upper_bound: 7
   norm_lower_bound: -1
@@ -22,8 +23,8 @@ data_split:
 train:
   train_data_dir: data/train/
   model_save_dir: models/
-  batch_size: 8
-  epochs: 5
+  batch_size: 10
+  epochs: 20
   activation_function: relu
   learning_rate: 0.001
   validation_split: 0.2

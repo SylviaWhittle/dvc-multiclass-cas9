@@ -5,7 +5,8 @@
 from typing import Callable
 
 from loguru import logger
-
+import numpy as np
+import numpy.typing as npt
 from keras.optimizers import Adam
 from keras.models import Model
 from keras.losses import Dice
@@ -26,36 +27,67 @@ import tensorflow as tf
 
 
 @register_keras_serializable(package="custom_losses")
-def multiclass_dice_loss_optionally_ignore_background(y_true, y_pred, ignore_background: bool, smooth: float = 1e-5) -> tf.Tensor:
+def multiclass_dice_loss_optionally_ignore_background(
+    y_true,
+    y_pred,
+    ignore_background: bool,
+    smooth: float = 1e-5,
+    class_weights: list[float] | None = None,
+) -> tf.Tensor:
     """Multiclass DICE loss function for masks of shape (batch, H, W, C) where C > 2."""
     y_true = tf.cast(y_true, tf.float32)
     y_pred = tf.cast(y_pred, tf.float32)
-
-    # Check that is one-hot encoded
-    # Ensure dimensions expected
-    if len(y_true.shape) != 4 or len(y_pred.shape) != 4:
-        raise ValueError(
-            f"Expected y_true and y_pred to have 4 dimensions (batch, H, W, C)," f"got {len(y_true.shape)} and {len(y_pred.shape)}"
-        )
-    if y_true.shape[-1] < 2:
-        raise ValueError("y_true must be one-hot encoded with at least 2 channels for multiclass DICE loss.")
     
+    # Validate shapes
+    if y_true.shape.rank != 4 or y_pred.shape.rank != 4:
+        raise ValueError(f"Expected 4D tensors, got ranks {y_true.shape.rank} and {y_pred.shape.rank}")
+    if y_true.shape[-1] != y_pred.shape[-1]:
+        raise ValueError(f"Last dim (channels) mismatch: y_true={y_true.shape[-1]} y_pred={y_pred.shape[-1]}")
+
+    # One-hot check
+    max_per_pixel = tf.reduce_max(y_true, axis=-1)
+    # Check by seeing if max per pixel is either 0 or 1 everywhere.
+    one_hot_mask = tf.logical_or(tf.equal(max_per_pixel, 0.0), tf.equal(max_per_pixel, 1.0))
+    tf.debugging.assert_equal(
+        tf.reduce_all(one_hot_mask),
+        tf.constant(True),
+        message="y_true mask is not one-hot encoded along the channel dimension."
+    )
+
     # Compute per-class dice
     axes = [1, 2] # spatial dimensions excluding batch and channel
     # compute intersection per class by multiplying each pixel of y_true and y_pred and summing over spatial dimensions
     # this calculates the number of pixels correctly predicted for each class
-    intersection = tf.reduce_sum(y_true * y_pred, axis=axes)
-    sum_true = tf.reduce_sum(y_true, axis=axes)
-    sum_pred = tf.reduce_sum(y_pred, axis=axes)
-
+    intersection = tf.reduce_sum(y_true * y_pred, axis=axes) # shape (batch, channel)
+    sum_true = tf.reduce_sum(y_true, axis=axes) # shape (batch, channel)
+    sum_pred = tf.reduce_sum(y_pred, axis=axes) # shape (batch, channel)
+    # Calculate DICE per class
     dice_per_class = (2.0 * intersection + smooth) / (sum_true + sum_pred + smooth) # shape (batch, channel)
-    assert len(dice_per_class.shape) == 2, f"Expected dice_per_class to have 2 dimensions (B, C), got {len(dice_per_class.shape)}"
-    dice_per_class = tf.reduce_mean(dice_per_class, axis=0) # average over batch, shape (channel)
-
+    
+    # Don't average over batch, this will be handled by the class reduction.
+    
+    # Handle background exclusion optionally
     if ignore_background:
-        dice_per_class = dice_per_class[1:] # ignore background class (assumed to be channel 0)
-    dice_loss = 1.0 - tf.reduce_mean(dice_per_class) # average over classes
-    return dice_loss
+        # note: 1: selects all but background channel, : selects all batch slices.
+        dice_per_class = dice_per_class[:, 1:] # shape (batch, channel-1)
+        # also ignore background in class weights if provided
+        if class_weights is not None:
+            class_weights = class_weights[1:]
+
+    # apply class weights (if provided)
+    if class_weights is not None:
+        # Create a tensor from the class weights since we can assume they all add to 1 and so don't need normalization
+        weights = tf.convert_to_tensor(class_weights, dtype=tf.float32) # shape (channels)
+        # normalise weights just in case, with small epsilon to avoid zero divisions.
+        weights = weights / (tf.reduce_sum(weights) + 1e-12)
+        # weighted sum over classes
+        dice_loss_per_sample = tf.reduce_sum(dice_per_class * weights, axis=-1) # shape (batch)
+    else:
+        # Average over classes
+        dice_loss_per_sample = tf.reduce_mean(dice_per_class, axis=-1) # shape (batch)
+
+    return 1.0 - dice_loss_per_sample # convert from score to loss. shape (batch)
+
 
 @register_keras_serializable(package="custom_losses")
 def multiclass_dice_loss_ignore_background(y_true, y_pred, smooth: float = 1e-5) -> tf.Tensor:
@@ -108,6 +140,57 @@ def dice_loss(y_true, y_pred, smooth=1e-5):
 
     dice_per_sample = 1 - (2 * intersection + smooth) / (sum_true + sum_pred + smooth)
     return tf.reduce_mean(dice_per_sample)
+
+@register_keras_serializable(package="custom_losses")
+class ClassWeightedMulticlassDice(tf.keras.losses.Loss):
+    """Class-weighted multiclass DICE loss function wrapper."""
+
+    def __init__(
+        self,
+        class_weights: list[float] | None,
+        ignore_background: bool,
+        smooth: float = 1e-5,
+        reduction: str = "sum_over_batch_size",
+        name: str | None = None
+    ):
+        """Initialize the class-weighted multiclass DICE loss.
+        
+        Parameters
+        ----------
+        class_weights : list[float] | None
+            Class weights to apply. Must sum to 1.0 and be as long as the number of classes (channels), or None for equal weighting.
+        ignore_background : bool
+            Whether to ignore the background class (assumed to be channel 0) in the loss calculation.
+        smooth : float
+            Smoothing factor to prevent division by zero.
+        reduction : str
+            Type of reduction to apply to loss. Options: "sum_over_batch_size", "sum", "none", None.
+        name : str | None
+            Name for the loss function.
+        """
+        name = name or f"class_weighted_multiclass_dice_{'ignore_bg' if ignore_background else 'include_bg'}"
+        super().__init__(name=name, reduction=reduction)
+        self.ignore_background = bool(ignore_background)
+        self.class_weights = class_weights
+        self.smooth = smooth
+    
+    def call(self, y_true, y_pred):
+        return multiclass_dice_loss_optionally_ignore_background(
+            y_true,
+            y_pred,
+            ignore_background=self.ignore_background,
+            smooth=self.smooth,
+            class_weights=self.class_weights
+        )
+    
+    def get_config(self):
+        config = super().get_config()
+        config.update({
+            "ignore_background": self.ignore_background,
+            "class_weights": list(self.class_weights) if self.class_weights is not None else None,
+            "smooth": self.smooth,
+        })
+        return config
 
 
 # IoU Loss
@@ -200,13 +283,15 @@ METRIC_REGISTRY = {
 }
 
 
-def get_loss_function(loss_function: str) -> str | Callable:
+def get_loss_function(loss_function: str, class_weights: list[float] | None = None) -> str | Callable:
     """Get the loss function based on the provided string.
 
     Parameters
     ----------
     loss_function : str
         The name of the loss function.
+    class_weights : list[float] | None
+        Class weights for multi-class, if applicable.
 
     Returns
     -------
@@ -217,6 +302,17 @@ def get_loss_function(loss_function: str) -> str | Callable:
         raise ValueError(
             f"Loss function {loss_function} not recognized." f"Available options: {list(LOSS_REGISTRY.keys())}"
         )
+    if loss_function == "multiclass_dice_ignore_background":
+        return ClassWeightedMulticlassDice(
+            class_weights=class_weights,
+            ignore_background=True
+        )
+    if loss_function == "multiclass_dice_include_background":
+        return ClassWeightedMulticlassDice(
+            class_weights=class_weights,
+            ignore_background=False
+        )
+    # Default: return the base loss function configuration from the registry.
     return LOSS_REGISTRY[loss_function]
 
 

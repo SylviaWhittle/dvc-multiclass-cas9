@@ -18,7 +18,8 @@ stages:
           random_seed: 0
           model_image_size: 256
           output_channels: 3
-          loss_function: categorical_crossentropy
+          class_weights:
+          loss_function: multiclass_dice_include_background
           metrics:
           - keras_iou
           norm_upper_bound: 7
@@ -65,19 +66,20 @@ stages:
       size: 5298
     - path: src/train.py
       hash: md5
-      md5: 737e8e5a8596b11eef04f54f2648baf9
-      size: 10795
+      md5: b54164e4f46bf9de457831fd58551b62
+      size: 10969
     - path: src/unet.py
       hash: md5
-      md5: 9c834505d48e9005ef72837f496702aa
-      size: 14683
+      md5: a21b54a1e05fc92e06a42ac70086ff34
+      size: 18613
     params:
       params.yaml:
         base:
           random_seed: 0
           model_image_size: 256
           output_channels: 3
-          loss_function: categorical_crossentropy
+          class_weights:
+          loss_function: multiclass_dice_include_background
           metrics:
           - keras_iou
           norm_upper_bound: 7
@@ -89,16 +91,16 @@ stages:
         train:
           train_data_dir: data/train/
           model_save_dir: models/
-          batch_size: 8
-          epochs: 5
+          batch_size: 10
+          epochs: 20
           activation_function: relu
           learning_rate: 0.001
           validation_split: 0.2
     outs:
     - path: models/unet_model.keras
       hash: md5
-      md5: 2af593975a821d46cfda8f2af8227540
-      size: 23461063
+      md5: 167f17127c52242bc2b904eeed5b047a
+      size: 23461333
   evaluate:
     cmd: python src/evaluate.py
     deps:
@@ -109,8 +111,8 @@ stages:
       nfiles: 80
     - path: models/unet_model.keras
       hash: md5
-      md5: 2af593975a821d46cfda8f2af8227540
-      size: 23461063
+      md5: 167f17127c52242bc2b904eeed5b047a
+      size: 23461333
     - path: src/evaluate.py
       hash: md5
       md5: ecec2baa5146b63cc772e107d34b0a80
@@ -121,15 +123,16 @@ stages:
       size: 3470
     - path: src/unet.py
       hash: md5
-      md5: 9c834505d48e9005ef72837f496702aa
-      size: 14683
+      md5: a21b54a1e05fc92e06a42ac70086ff34
+      size: 18613
     params:
       params.yaml:
         base:
           random_seed: 0
           model_image_size: 256
           output_channels: 3
-          loss_function: categorical_crossentropy
+          class_weights:
+          loss_function: multiclass_dice_include_background
           metrics:
           - keras_iou
           norm_upper_bound: 7
@@ -144,6 +147,6 @@ stages:
     outs:
     - path: results/evaluate/
       hash: md5
-      md5: 2beea339c50f95c3b0886e3e072ff413.dir
-      size: 988221
+      md5: a180fabc2a57ef635af30bb8ab0919ad.dir
+      size: 834821
       nfiles: 21

@@ -96,6 +96,7 @@ def train_model(
     learning_rate: float,
     batch_size: int,
     epochs: int,
+    class_weights: list[float] | None,
     norm_upper_bound: float,
     norm_lower_bound: int,
     filter_channels: list[str],
@@ -119,6 +120,7 @@ def train_model(
     logger.info(f"|  Learning rate: {learning_rate}")
     logger.info(f"|  Batch size: {batch_size}")
     logger.info(f"|  Epochs: {epochs}")
+    logger.info(f"|  Class weights: {class_weights}")
     logger.info(f"|  Normalisation upper bound: {norm_upper_bound}")
     logger.info(f"|  Normalisation lower bound: {norm_lower_bound}")
     logger.info(f"|  Test size: {validation_split}")
@@ -182,7 +184,7 @@ def train_model(
         output_channels=output_channels,
         learning_rate=learning_rate,
         activation_function=activation_function,
-        loss_function=get_loss_function(loss_function),
+        loss_function=get_loss_function(loss_function, class_weights=class_weights),
         metrics=get_metric_functions(metrics),
     )
 
@@ -276,6 +278,7 @@ if __name__ == "__main__":
         learning_rate=train_params["learning_rate"],
         batch_size=train_params["batch_size"],
         epochs=train_params["epochs"],
+        class_weights=base_params["class_weights"],
         norm_upper_bound=base_params["norm_upper_bound"],
         norm_lower_bound=base_params["norm_lower_bound"],
         filter_channels=base_params["filter_channels"],
