@@ -219,39 +219,39 @@ def train_model(
         )
         logger.info("Training: Finished.")
 
-        # Show result on a few training images from the train generator
-        logger.info("Training: Evaluating a few training images.")
-        for batch_x, batch_y in train_generator:
-            # Iterate over a batch of images
-            for i in range(min(3, batch_size)):
-                image = batch_x[i]
-                mask = batch_y[i]
+    # Show result on a few training images from the train generator
+    logger.info("Training: Evaluating a few training images.")
+    for batch_x, batch_y in train_generator:
+        # Iterate over a batch of images
+        for i in range(min(3, batch_size)):
+            image = batch_x[i]
+            mask = batch_y[i]
 
-                # Add the batch dimension
-                input_image = np.expand_dims(image, axis=0)
+            # Add the batch dimension
+            input_image = np.expand_dims(image, axis=0)
 
-                # Predict the mask (without preprocessing as the generator already did that)
-                predicted_mask, predicted_mask_binary, mask_predicted_flat_discrete, mask_predicted_flat = predict_mask(
-                    model=model,
-                    image=input_image,
-                    norm_lower_bound=norm_lower_bound,
-                    norm_upper_bound=norm_upper_bound,
-                    filter_channels=filter_channels,
-                    hessian_component=hessian_component,
-                    hessian_sigma=hessian_sigma,
-                    do_image_preprocessing=False,
-                )
-                fig = plot_image_mask_prediction(
-                    image=image,
-                    mask=mask,
-                    mask_predicted=predicted_mask,
-                    mask_predicted_binary=predicted_mask_binary,
-                    mask_predicted_flat_discrete=mask_predicted_flat_discrete,
-                    mask_predicted_flat=mask_predicted_flat,
-                )
-                live.log_image(f"train_image_plot_{i}.png", fig)
+            # Predict the mask (without preprocessing as the generator already did that)
+            predicted_mask, predicted_mask_binary, mask_predicted_flat_discrete, mask_predicted_flat = predict_mask(
+                model=model,
+                image=input_image,
+                norm_lower_bound=norm_lower_bound,
+                norm_upper_bound=norm_upper_bound,
+                filter_channels=filter_channels,
+                hessian_component=hessian_component,
+                hessian_sigma=hessian_sigma,
+                do_image_preprocessing=False,
+            )
+            fig = plot_image_mask_prediction(
+                image=image,
+                mask=mask,
+                mask_predicted=predicted_mask,
+                mask_predicted_binary=predicted_mask_binary,
+                mask_predicted_flat_discrete=mask_predicted_flat_discrete,
+                mask_predicted_flat=mask_predicted_flat,
+            )
+            live.log_image(f"train_image_plot_{i}.png", fig)
 
-            break # stop after one batch
+        break # stop after one batch
 
 
 if __name__ == "__main__":

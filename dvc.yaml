@@ -24,6 +24,7 @@ stages:
     - train
     outs:
     - models/unet_model.keras
+    - results/train/
   evaluate:
     cmd: python src/evaluate.py
     deps:
@@ -43,7 +44,6 @@ metrics:
 plots:
 - results/train/plots/metrics:
     x: step
-- results/train/plots/images
 - results/evaluate/plots/images
 artifacts:
   unet_model:

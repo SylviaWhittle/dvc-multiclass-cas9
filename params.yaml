@@ -8,7 +8,7 @@ base:
   class_weights: null
   # loss_function - Options: binary_crossentropy, iou_loss, dice_loss, keras_dice, multiclass_dice_ignore_background,
   # multiclass_dice_include_background, categorical_crossentropy
-  loss_function: "multiclass_dice_include_background"
+  loss_function: "categorical_crossentropy"
   metrics: ["keras_iou"] # Options: accuracy, iou_loss, dice_loss, keras_iou
   norm_upper_bound: 7
   norm_lower_bound: -1
@@ -23,8 +23,8 @@ data_split:
 train:
   train_data_dir: data/train/
   model_save_dir: models/
-  batch_size: 10
-  epochs: 20
+  batch_size: 8
+  epochs: 10
   activation_function: relu
   learning_rate: 0.001
   validation_split: 0.2

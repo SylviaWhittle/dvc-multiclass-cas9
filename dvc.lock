@@ -19,7 +19,7 @@ stages:
           model_image_size: 256
           output_channels: 3
           class_weights:
-          loss_function: multiclass_dice_include_background
+          loss_function: categorical_crossentropy
           metrics:
           - keras_iou
           norm_upper_bound: 7
@@ -66,8 +66,8 @@ stages:
       size: 5298
     - path: src/train.py
       hash: md5
-      md5: b54164e4f46bf9de457831fd58551b62
-      size: 10969
+      md5: 817bca6bc855d15121a9d7ee1a1b1dd1
+      size: 10849
     - path: src/unet.py
       hash: md5
       md5: a21b54a1e05fc92e06a42ac70086ff34
@@ -79,7 +79,7 @@ stages:
           model_image_size: 256
           output_channels: 3
           class_weights:
-          loss_function: multiclass_dice_include_background
+          loss_function: categorical_crossentropy
           metrics:
           - keras_iou
           norm_upper_bound: 7
@@ -91,16 +91,21 @@ stages:
         train:
           train_data_dir: data/train/
           model_save_dir: models/
-          batch_size: 10
-          epochs: 20
+          batch_size: 8
+          epochs: 10
           activation_function: relu
           learning_rate: 0.001
           validation_split: 0.2
     outs:
     - path: models/unet_model.keras
       hash: md5
-      md5: 167f17127c52242bc2b904eeed5b047a
-      size: 23461333
+      md5: 90a6679409998853a9709cebdd7281f2
+      size: 23461063
+    - path: results/train/
+      hash: md5
+      md5: f3116d56b24839573793cf4b4752fbf2.dir
+      size: 164852
+      nfiles: 8
   evaluate:
     cmd: python src/evaluate.py
     deps:
@@ -111,8 +116,8 @@ stages:
       nfiles: 80
     - path: models/unet_model.keras
       hash: md5
-      md5: 167f17127c52242bc2b904eeed5b047a
-      size: 23461333
+      md5: 90a6679409998853a9709cebdd7281f2
+      size: 23461063
     - path: src/evaluate.py
       hash: md5
       md5: ecec2baa5146b63cc772e107d34b0a80
@@ -132,7 +137,7 @@ stages:
           model_image_size: 256
           output_channels: 3
           class_weights:
-          loss_function: multiclass_dice_include_background
+          loss_function: categorical_crossentropy
           metrics:
           - keras_iou
           norm_upper_bound: 7
@@ -147,6 +152,6 @@ stages:
     outs:
     - path: results/evaluate/
       hash: md5
-      md5: a180fabc2a57ef635af30bb8ab0919ad.dir
-      size: 834821
+      md5: 8da07fe9d2ca5fa4313201e95bbded2c.dir
+      size: 1055189
       nfiles: 21
